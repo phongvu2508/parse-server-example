@@ -325,78 +325,78 @@ Parse.Cloud.beforeSave("Company", function(request, response) {
   response.success();
 });
 
-// Parse.Cloud.job("listingExpiringCheck", function(request, status) {
+Parse.Cloud.define("listingExpiringCheck", function(request, status) {
 
-//   // var daysCheckForExpiring = 7;
-//   var daysCheckForExpiring = request.params.daysCheckForExpiring;
+  // var daysCheckForExpiring = 7;
+  var daysCheckForExpiring = request.params.daysCheckForExpiring;
 
-//   var today = new Date();
-//   // console.log("today: " + today);
-//   var dateCheckForExpiringInMilisecond = today.getTime() + daysCheckForExpiring * 86400000;
-//   // console.log("dateCheckForExpiringInMilisecond: " + dateCheckForExpiringInMilisecond);
-//   var query = new Parse.Query("Listing");
-//   query.contains("status", "active");
+  var today = new Date();
+  // console.log("today: " + today);
+  var dateCheckForExpiringInMilisecond = today.getTime() + daysCheckForExpiring * 86400000;
+  // console.log("dateCheckForExpiringInMilisecond: " + dateCheckForExpiringInMilisecond);
+  var query = new Parse.Query("Listing");
+  query.contains("status", "active");
 
-//   query.each(function(listing) {
-//     var expireDate = listing.get("expirationDate");
-//     // console.log("expireDate: " + expireDate);
-//     // console.log("expireDate in milisecond: " + expireDate.gettime);
-//       if(expireDate.getTime() < dateCheckForExpiringInMilisecond){
-//         listing.set("status", "expiring");
-//         listing.save();
-//       }
-//   }).then(function() {
-//     // Set the job's success status
-//     status.success("Job completed successfully.");
-//   }, function(error) {
-//     // Set the job's error status
-//     status.error("Uh oh, something went wrong.");
-//   });
+  query.each(function(listing) {
+    var expireDate = listing.get("expirationDate");
+    // console.log("expireDate: " + expireDate);
+    // console.log("expireDate in milisecond: " + expireDate.gettime);
+      if(expireDate.getTime() < dateCheckForExpiringInMilisecond){
+        listing.set("status", "expiring");
+        listing.save();
+      }
+  }).then(function() {
+    // Set the job's success status
+    status.success("Job completed successfully.");
+  }, function(error) {
+    // Set the job's error status
+    status.error("Uh oh, something went wrong.");
+  });
 
-// });
+});
 
-// Parse.Cloud.job("listingExpiredCheck", function(request, status) {
-//   var today = new Date();
-//   var todayInMiliseconds = today.getTime();
-//   var query = new Parse.Query("Listing");
-//   query.containedIn("status", ["expiring", "inactive"]);
+Parse.Cloud.define("listingExpiredCheck", function(request, status) {
+  var today = new Date();
+  var todayInMiliseconds = today.getTime();
+  var query = new Parse.Query("Listing");
+  query.containedIn("status", ["expiring", "inactive"]);
 
-//   query.each(function(listing) {
-//     var expireDate = listing.get("expirationDate");
-//       if(expireDate.getTime() < todayInMiliseconds){
-//         listing.set("status", "expired");
-//         listing.save();
-//       }
-//   }).then(function() {
-//     // Set the job's success status
-//     status.success("Job completed successfully.");
-//   }, function(error) {
-//     // Set the job's error status
-//     status.error("Uh oh, something went wrong.");
-//   });
+  query.each(function(listing) {
+    var expireDate = listing.get("expirationDate");
+      if(expireDate.getTime() < todayInMiliseconds){
+        listing.set("status", "expired");
+        listing.save();
+      }
+  }).then(function() {
+    // Set the job's success status
+    status.success("Job completed successfully.");
+  }, function(error) {
+    // Set the job's error status
+    status.error("Uh oh, something went wrong.");
+  });
 
-// });
+});
 
-// Parse.Cloud.job("listingExpiredCleanup", function(request, status) {
+Parse.Cloud.define("listingExpiredCleanup", function(request, status) {
 
-//   var daysCheckForExpired = request.params.daysCheckForExpired;
+  var daysCheckForExpired = request.params.daysCheckForExpired;
 
-//   var today = new Date();
-//   var todayInMiliseconds = today.getTime() - daysCheckForExpired * 86400000;
-//   var query = new Parse.Query("Listing");
-//   query.contains("status", "expired");
+  var today = new Date();
+  var todayInMiliseconds = today.getTime() - daysCheckForExpired * 86400000;
+  var query = new Parse.Query("Listing");
+  query.contains("status", "expired");
 
-//   query.each(function(listing) {
-//     var daysCheckForExpiredInMilisecond = listing.get("expirationDate").getTime();
-//     if(daysCheckForExpiredInMilisecond < todayInMiliseconds){
-//       listing.destroy();
-//     }
-//   }).then(function() {
-//     // Set the job's success status
-//     status.success("Job completed successfully.");
-//   }, function(error) {
-//     // Set the job's error status
-//     status.error("Uh oh, something went wrong.");
-//   });
+  query.each(function(listing) {
+    var daysCheckForExpiredInMilisecond = listing.get("expirationDate").getTime();
+    if(daysCheckForExpiredInMilisecond < todayInMiliseconds){
+      listing.destroy();
+    }
+  }).then(function() {
+    // Set the job's success status
+    status.success("Job completed successfully.");
+  }, function(error) {
+    // Set the job's error status
+    status.error("Uh oh, something went wrong.");
+  });
 
-// });
+});
