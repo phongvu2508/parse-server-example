@@ -1,7 +1,8 @@
 "use strict";
 
 var crypto  = require('crypto');
-var Charset = require('cloud/library/randomString/charset.js');
+var path = require('path');
+var Charset = require(path.join(__dirname, 'charset.js'));
 
 exports.generate = function(options) {
   
