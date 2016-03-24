@@ -10,7 +10,7 @@
 // var fs = require('fs');
 
 var path = require('path');
-var randomstring = require(path.join(__dirname, 'cloud/library/randomString/randomString.js'));
+var randomstring = require(path.join(__dirname, 'library/randomString/randomString.js'));
 
 
 // Use Parse.Cloud.define to define as many cloud functions as you want.
