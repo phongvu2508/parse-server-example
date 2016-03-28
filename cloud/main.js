@@ -45,38 +45,45 @@ Parse.Cloud.define("chargeOneTime", function(request, response) {
 
   // Top level variables used in the promise chain. Unlike callbacks,
   // each link in the chain of promise has a separate context.
-  var item, order;
+  // var item, order;
 
-  // We start in the context of a promise to keep all the
-  // asynchronous code consistent. This is not required.
-  Parse.Promise.as().then(function(order) { 
-    // Now we can charge the credit card using Stripe and the credit card token.
-    return Stripe.Charges.create({
+  return Stripe.Charges.create({
       amount: 20 * 100, // hardcoded $ 20 
       currency: 'usd',
       card: request.params.cardToken,
       description: "my description",
       metadata: {"some_id": "1232"}
-    }).then(null, function(error) {
+    }).then(function(success){
+      response.success('Your card has been charged');
+    }, function(error) {
       console.log('Charging with stripe failed. Error: ' + error);
-      return Parse.Promise.error('An error has occurred. Your credit card was not charged.');
+      response.error('An error has occurred. Your credit card was not charged.');
     });
 
-  }).then(function(purchase) {
+  // // We start in the context of a promise to keep all the
+  // // asynchronous code consistent. This is not required.
+  // Parse.Promise.as().then(function(order) { 
+  //   // Now we can charge the credit card using Stripe and the credit card token.
+  //   return Stripe.Charges.create({
+  //     amount: 20 * 100, // hardcoded $ 20 
+  //     currency: 'usd',
+  //     card: request.params.cardToken,
+  //     description: "my description",
+  //     metadata: {"some_id": "1232"}
+  //   }).then(null, function(error) {
+  //     console.log('Charging with stripe failed. Error: ' + error);
+  //     return Parse.Promise.error('An error has occurred. Your credit card was not charged.');
+  //   });
 
-  }).then(function(order) {
+  // }).then(function(purchase) {
+  //   response.success('Success');
+  // }).then(function(error) {
+  //   // Any promise that throws an error will propagate to this handler.
+  // // We use it to return the error from our Cloud Function using the 
+  // // message we individually crafted based on the failure above.
+  //   response.error(error);
 
-
-  }).then(function() {
-    // And we're done!
-    response.success('Success');
-
-  // Any promise that throws an error will propagate to this handler.
-  // We use it to return the error from our Cloud Function using the 
-  // message we individually crafted based on the failure above.
-  }, function(error) {
-    response.error(error);
-  });
+  // });
 });
 
 /*
@@ -96,34 +103,34 @@ Parse.Cloud.define("chargeOneTime", function(request, response) {
  * Also, please note that on success, "Success" will be returned. 
  */
 
-Parse.Cloud.define("createSubscriptionPlan", function(request, response) {
-  // The Item and Order tables are completely locked down. We 
-  // ensure only Cloud Code can get access by using the master key.
-  Parse.Cloud.useMasterKey();
+// Parse.Cloud.define("createSubscriptionPlan", function(request, response) {
+//   // The Item and Order tables are completely locked down. We 
+//   // ensure only Cloud Code can get access by using the master key.
+//   Parse.Cloud.useMasterKey();
 
-  // Top level variables used in the promise chain. Unlike callbacks,
-  // each link in the chain of promise has a separate context.
-  var item, order;
+//   // Top level variables used in the promise chain. Unlike callbacks,
+//   // each link in the chain of promise has a separate context.
+//   var item, order;
 
-  // We start in the context of a promise to keep all the
-  // asynchronous code consistent. This is not required.
-  Parse.Promise.as().then(function(order) { 
+//   // We start in the context of a promise to keep all the
+//   // asynchronous code consistent. This is not required.
+//   Parse.Promise.as().then(function(order) { 
 
-  }).then(function(purchase) {
+//   }).then(function(purchase) {
 
-  }).then(function(order) {
+//   }).then(function(order) {
+//     response.success('Success');
+//   }).then(function() {
+//     // And we're done!
+//     response.success('Success');
 
-  }).then(function() {
-    // And we're done!
-    response.success('Success');
-
-  // Any promise that throws an error will propagate to this handler.
-  // We use it to return the error from our Cloud Function using the 
-  // message we individually crafted based on the failure above.
-  }, function(error) {
-    response.error(error);
-  });
-});
+//   // Any promise that throws an error will propagate to this handler.
+//   // We use it to return the error from our Cloud Function using the 
+//   // message we individually crafted based on the failure above.
+//   }, function(error) {
+//     response.error(error);
+//   });
+// });
 
 // Parse.Cloud.define("shareVivaEmail", function(request, response) {
   
