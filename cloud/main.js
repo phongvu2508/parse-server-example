@@ -3,7 +3,7 @@
 // var Stripe = require('stripe');
 // Stripe.initialize('pk_test_6pRNASCoBOKtIshFeQd4XMUh'); //Test key
 
-var Stripe = require("stripe")(
+var stripe = require("stripe")(
   "pk_test_6pRNASCoBOKtIshFeQd4XMUh"
 ); // Test key
 
@@ -38,7 +38,7 @@ Parse.Cloud.define("hello", function(request, response) {
  *
  * Also, please note that on success, "Success" will be returned. 
  */
-Parse.Cloud.define("chargeOneTime", function(request, response) {
+Parse.Cloud.define("chargeListing", function(request, response) {
   // The Item and Order tables are completely locked down. We 
   // ensure only Cloud Code can get access by using the master key.
   Parse.Cloud.useMasterKey();
@@ -47,17 +47,22 @@ Parse.Cloud.define("chargeOneTime", function(request, response) {
   // each link in the chain of promise has a separate context.
   // var item, order;
 
-  return Stripe.Charges.create({
+  return stripe.charges.create({
       amount: 20 * 100, // hardcoded $ 20 
       currency: 'usd',
       card: request.params.cardToken,
       description: "my description",
       metadata: {"some_id": "1232"}
-    }).then(function(success){
-      response.success('Your card has been charged');
-    }, function(error) {
-      console.log('Charging with stripe failed. Error: ' + error);
-      response.error('An error has occurred. Your credit card was not charged.');
+    }, function(err, charge) {
+      // asynchronously called
+      if(charge){
+        // TODO: update listing info
+        response.success(charge);
+      }else
+      {
+        console.log('Charging with stripe failed. Error: ' + err);
+        response.error(err);
+      }
     });
 
   // // We start in the context of a promise to keep all the
