@@ -1,7 +1,11 @@
 
 /* Initialize the Stripe Cloud Modules */
-var Stripe = require('stripe');
-Stripe.initialize('pk_test_6pRNASCoBOKtIshFeQd4XMUh'); //Test key
+// var Stripe = require('stripe');
+// Stripe.initialize('pk_test_6pRNASCoBOKtIshFeQd4XMUh'); //Test key
+
+var Stripe = require("stripe")(
+  "pk_test_6pRNASCoBOKtIshFeQd4XMUh"
+); // Test key
 
 // var Mailgun = require('mailgun');
 // Mailgun.initialize("sandbox70d17fc2c9044f9992e1c0f7ba66e147.mailgun.org", "key-75b094eb418172847bfd1ae838b2fe74");
