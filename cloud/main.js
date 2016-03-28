@@ -1,7 +1,7 @@
 
-/* Initialize the Stripe and Mailgun Cloud Modules */
-// var Stripe = require('stripe');
-// Stripe.initialize('pk_test_6pRNASCoBOKtIshFeQd4XMUh'); //Test key
+/* Initialize the Stripe Cloud Modules */
+var Stripe = require('stripe');
+Stripe.initialize('pk_test_6pRNASCoBOKtIshFeQd4XMUh'); //Test key
 
 // var Mailgun = require('mailgun');
 // Mailgun.initialize("sandbox70d17fc2c9044f9992e1c0f7ba66e147.mailgun.org", "key-75b094eb418172847bfd1ae838b2fe74");
@@ -19,107 +19,107 @@ Parse.Cloud.define("hello", function(request, response) {
   response.success("Hello from the Cloud!");
 });
 
-// /*
-//  * Charge user for one time using the Stripe
-//  * Cloud Module.
-//  *
-//  * Expected input (in request.params):
-//  *   reasonForTheCharge : String, can be "Mug, "Tshirt" or "Hoodie"
-//  *   cardToken      	: String, the credit card token returned to the client from Stripe
+/*
+ * Charge user for one time using the Stripe
+ * Cloud Module.
+ *
+ * Expected input (in request.params):
+ *   reasonForTheCharge : String, can be "Mug, "Tshirt" or "Hoodie"
+ *   cardToken      	: String, the credit card token returned to the client from Stripe
 
-//  *   chargeAmount		: int, charge amount in $
+ *   chargeAmount		: int, charge amount in $
 
-//  *   id           	: String, the buyer's id
-//  *   name           : String, the buyer's name
-//  *
-//  * Also, please note that on success, "Success" will be returned. 
-//  */
-// Parse.Cloud.define("chargeOneTime", function(request, response) {
-//   // The Item and Order tables are completely locked down. We 
-//   // ensure only Cloud Code can get access by using the master key.
-//   Parse.Cloud.useMasterKey();
+ *   id           	: String, the buyer's id
+ *   name           : String, the buyer's name
+ *
+ * Also, please note that on success, "Success" will be returned. 
+ */
+Parse.Cloud.define("chargeOneTime", function(request, response) {
+  // The Item and Order tables are completely locked down. We 
+  // ensure only Cloud Code can get access by using the master key.
+  Parse.Cloud.useMasterKey();
 
-//   // Top level variables used in the promise chain. Unlike callbacks,
-//   // each link in the chain of promise has a separate context.
-//   var item, order;
+  // Top level variables used in the promise chain. Unlike callbacks,
+  // each link in the chain of promise has a separate context.
+  var item, order;
 
-//   // We start in the context of a promise to keep all the
-//   // asynchronous code consistent. This is not required.
-//   Parse.Promise.as().then(function(order) { 
-//     // Now we can charge the credit card using Stripe and the credit card token.
-//     return Stripe.Charges.create({
-//       amount: 20 * 100, // hardcoded $ 20 
-//       currency: 'usd',
-//       card: request.params.cardToken,
-//       description: "my description",
-//       metadata: {"some_id": "1232"}
-//     }).then(null, function(error) {
-//       console.log('Charging with stripe failed. Error: ' + error);
-//       return Parse.Promise.error('An error has occurred. Your credit card was not charged.');
-//     });
+  // We start in the context of a promise to keep all the
+  // asynchronous code consistent. This is not required.
+  Parse.Promise.as().then(function(order) { 
+    // Now we can charge the credit card using Stripe and the credit card token.
+    return Stripe.Charges.create({
+      amount: 20 * 100, // hardcoded $ 20 
+      currency: 'usd',
+      card: request.params.cardToken,
+      description: "my description",
+      metadata: {"some_id": "1232"}
+    }).then(null, function(error) {
+      console.log('Charging with stripe failed. Error: ' + error);
+      return Parse.Promise.error('An error has occurred. Your credit card was not charged.');
+    });
 
-//   }).then(function(purchase) {
+  }).then(function(purchase) {
 
-//   }).then(function(order) {
+  }).then(function(order) {
 
 
-//   }).then(function() {
-//     // And we're done!
-//     response.success('Success');
+  }).then(function() {
+    // And we're done!
+    response.success('Success');
 
-//   // Any promise that throws an error will propagate to this handler.
-//   // We use it to return the error from our Cloud Function using the 
-//   // message we individually crafted based on the failure above.
-//   }, function(error) {
-//     response.error(error);
-//   });
-// });
+  // Any promise that throws an error will propagate to this handler.
+  // We use it to return the error from our Cloud Function using the 
+  // message we individually crafted based on the failure above.
+  }, function(error) {
+    response.error(error);
+  });
+});
 
-// /*
-//  * Setup a charging plan for an user using the Stripe
-//  * Cloud Module.
-//  *
-//  * Expected input (in request.params):
-//  *   reasonForTheCharge : String, can be "Mug, "Tshirt" or "Hoodie"
-//  *   cardToken      	: String, the credit card token returned to the client from Stripe
+/*
+ * Setup a charging plan for an user using the Stripe
+ * Cloud Module.
+ *
+ * Expected input (in request.params):
+ *   reasonForTheCharge : String, can be "Mug, "Tshirt" or "Hoodie"
+ *   cardToken      	: String, the credit card token returned to the client from Stripe
 
-//  *   chargeAmount		: int, charge amount in $
-//  *	 repeat				: enum? monthly, yearly.
+ *   chargeAmount		: int, charge amount in $
+ *	 repeat				: enum? monthly, yearly.
 
-//  *   id           	: String, the buyer's id
-//  *   name           : String, the buyer's name
-//  *
-//  * Also, please note that on success, "Success" will be returned. 
-//  */
+ *   id           	: String, the buyer's id
+ *   name           : String, the buyer's name
+ *
+ * Also, please note that on success, "Success" will be returned. 
+ */
 
-// Parse.Cloud.define("createSubscriptionPlan", function(request, response) {
-//   // The Item and Order tables are completely locked down. We 
-//   // ensure only Cloud Code can get access by using the master key.
-//   Parse.Cloud.useMasterKey();
+Parse.Cloud.define("createSubscriptionPlan", function(request, response) {
+  // The Item and Order tables are completely locked down. We 
+  // ensure only Cloud Code can get access by using the master key.
+  Parse.Cloud.useMasterKey();
 
-//   // Top level variables used in the promise chain. Unlike callbacks,
-//   // each link in the chain of promise has a separate context.
-//   var item, order;
+  // Top level variables used in the promise chain. Unlike callbacks,
+  // each link in the chain of promise has a separate context.
+  var item, order;
 
-//   // We start in the context of a promise to keep all the
-//   // asynchronous code consistent. This is not required.
-//   Parse.Promise.as().then(function(order) { 
+  // We start in the context of a promise to keep all the
+  // asynchronous code consistent. This is not required.
+  Parse.Promise.as().then(function(order) { 
 
-//   }).then(function(purchase) {
+  }).then(function(purchase) {
 
-//   }).then(function(order) {
+  }).then(function(order) {
 
-//   }).then(function() {
-//     // And we're done!
-//     response.success('Success');
+  }).then(function() {
+    // And we're done!
+    response.success('Success');
 
-//   // Any promise that throws an error will propagate to this handler.
-//   // We use it to return the error from our Cloud Function using the 
-//   // message we individually crafted based on the failure above.
-//   }, function(error) {
-//     response.error(error);
-//   });
-// });
+  // Any promise that throws an error will propagate to this handler.
+  // We use it to return the error from our Cloud Function using the 
+  // message we individually crafted based on the failure above.
+  }, function(error) {
+    response.error(error);
+  });
+});
 
 // Parse.Cloud.define("shareVivaEmail", function(request, response) {
   
