@@ -77,15 +77,19 @@ Parse.Cloud.define("chargeListing", function(request, response) {
 
                 console.log('Listing updating to status = active, paymentStatus = paid, expirationDate = ' + expirationDate);
 
-                listing.save().then(function() {
-                  console.log('Listing update successfully ' + listing.id);
-                  response.success(charge);
-                }, function(error) {
-                  // worst situation, credit card was charged, but we cannot save the listing update. 
-                    console.log('Credit card was charged, listing update fail ' + listing.id);
-                    response.error(error);
-                });
-                
+                listing.save();
+                // .then(function() {
+                //   console.log('Listing update successfully ' + listing.id);
+                //   response.success(charge);
+                // }, function(error) {
+                //   // worst situation, credit card was charged, but we cannot save the listing update. 
+                //     console.log('Credit card was charged, listing update fail ' + listing.id);
+                //     response.error(error);
+                // });
+
+                console.log('Listing update successfully ' + listing.id);
+                response.success(charge);
+
               }else
               {
                 console.log('Charging with stripe failed. Error: ' + err);
