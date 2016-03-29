@@ -37,19 +37,18 @@ Parse.Cloud.define("hello", function(request, response) {
  * Also, please note that on success, "Success" will be returned. 
  */
 Parse.Cloud.define("chargeListing", function(request, response) {
-  // The Item and Order tables are completely locked down. We 
-  // ensure only Cloud Code can get access by using the master key.
   Parse.Cloud.useMasterKey();
 
-  // Top level variables used in the promise chain. Unlike callbacks,
-  // each link in the chain of promise has a separate context.
-  // var item, order;
+  var amountInCent = request.params.listingType.get('pricePerListing') * 100; //amount by cent.
+  var user = request.params.user;
 
   return stripe.charges.create({
-      amount: 20 * 100, // hardcoded $ 20 
+      amount: amountInCent,
       currency: 'usd',
       source: request.params.cardToken,
-      description: "Charge for posting a listing"
+      description: "Charge for posting a listing of user " + user.get('username'),
+      receipt_email: user.get('email'),
+      metadata: {"FindtouchUserId": user.id}
     }, function(err, charge) {
       // asynchronously called
       if(charge){
