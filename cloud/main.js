@@ -73,8 +73,8 @@ Parse.Cloud.define("chargeListing", function(request, response) {
                 listing.set("status", "active");
                 listing.set("paymentStatus", "paid");
 
-                var expirationDate = new Date;
-                expirationDate.setTime(now.getTime() + parseInt(duration) * 86400000);
+                var expirationDate = new Date();
+                expirationDate.setTime(expirationDate.getTime() + parseInt(duration) * 86400000);
 
                 listing.set("expirationDate", expirationDate);
 
