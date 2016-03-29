@@ -1,5 +1,5 @@
 
-var moment = require('moment');
+// var moment = require('moment');
 
 /* Initialize the Stripe Cloud Modules */
 
@@ -73,8 +73,8 @@ Parse.Cloud.define("chargeListing", function(request, response) {
                 listing.set("status", "active");
                 listing.set("paymentStatus", "paid");
 
-                var now = moment();
-                var expirationDate =  now.add(duration, 'days');
+                var expirationDate = new Date;
+                expirationDate.setTime(now.getTime() + parseInt(duration) * 86400000);
 
                 listing.set("expirationDate", expirationDate);
 
@@ -88,10 +88,6 @@ Parse.Cloud.define("chargeListing", function(request, response) {
                     console.log('Credit card was charged, listing update fail ' + listing.id);
                     response.error(error);
                 });
-
-                // console.log('Listing update successfully ' + listing.id);
-                // response.success(charge);
-
               }else
               {
                 console.log('Charging with stripe failed. Error: ' + err);
