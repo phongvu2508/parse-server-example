@@ -39,7 +39,7 @@ Parse.Cloud.define("hello", function(request, response) {
  * Also, please note that on success, "Success" will be returned. 
  */
 Parse.Cloud.define("chargeListing", function(request, response) {
-  Parse.Cloud.useMasterKey();
+  // Parse.Cloud.useMasterKey();
 
   var userQuery = new Parse.Query(Parse.Object.extend("User"));
   userQuery.get(request.params.userID, {
@@ -52,15 +52,16 @@ Parse.Cloud.define("chargeListing", function(request, response) {
             var listingType = listing.get("listingType");
             var amountInCent = listingType.get('pricePerListing') * 100; //amount by cent.
             var duration = listingType.get('duration');
+            var description = "Charge for posting a listing of user " + user.get('username');
 
             return stripe.charges.create({
               amount: amountInCent,
               currency: 'usd',
               source: request.params.cardToken,
-              description: "Charge for posting a listing of user " + user.get('username'),
+              description: description,
               receipt_email: user.get('email'),
-              metadata: {"FindtouchUserId": request.params.userID,
-                          "FindtouchListingId": request.params.listingID}
+              metadata: {FindtouchUserId: request.params.userID,
+                          FindtouchListingId: request.params.listingID}
             }, function(err, charge) {
               // asynchronously called
               if(charge){
