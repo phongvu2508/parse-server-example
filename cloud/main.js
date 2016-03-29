@@ -1,4 +1,6 @@
 
+var moment = require('moment');
+
 /* Initialize the Stripe Cloud Modules */
 
 var stripe = require("stripe")(
@@ -39,135 +41,68 @@ Parse.Cloud.define("hello", function(request, response) {
 Parse.Cloud.define("chargeListing", function(request, response) {
   Parse.Cloud.useMasterKey();
 
-  var amountInCent = request.params.listingType.get('pricePerListing') * 100; //amount by cent.
-  var user = request.params.user;
+  var userQuery = new Parse.Query(Parse.Object.extend("User"));
+  userQuery.get(request.params.userID, {
+      success: function(user) {
+        var listingQuery = new Parse.Query(Parse.Object.extend("Listing"));
+        listingQuery.include("listingType")
 
-  return stripe.charges.create({
-      amount: amountInCent,
-      currency: 'usd',
-      source: request.params.cardToken,
-      description: "Charge for posting a listing of user " + user.get('username'),
-      receipt_email: user.get('email'),
-      metadata: {"FindtouchUserId": user.id}
-    }, function(err, charge) {
-      // asynchronously called
-      if(charge){
-        // TODO: update listing info
-        response.success(charge);
-      }else
-      {
-        console.log('Charging with stripe failed. Error: ' + err);
-        response.error(err);
+        listingQuery.get(request.params.listingID, {
+          success: function(listing) {
+            var listingType = listing.get("listingType");
+            var amountInCent = listingType.get('pricePerListing') * 100; //amount by cent.
+            var duration = listingType.get('duration');
+
+            return stripe.charges.create({
+              amount: amountInCent,
+              currency: 'usd',
+              source: request.params.cardToken,
+              description: "Charge for posting a listing of user " + user.get('username'),
+              receipt_email: user.get('email'),
+              metadata: {"FindtouchUserId": request.params.userID,
+                          "FindtouchListingId": request.params.listingID}
+            }, function(err, charge) {
+              // asynchronously called
+              if(charge){
+
+                listing.set("status", "active");
+                listing.set("paymentStatus", "paid");
+
+                listing.set("expirationDate", moment().add(duration, 'days'));
+
+                listing.save(null, {
+                  success: function(listing) {
+
+                    console.log('Listing update successfully ' + listing.id);
+                    response.success(charge);
+                  },
+                  error: function(listing, error) {
+                    // worst situation, credit card was charged, but we cannot save the listing update. 
+                    console.log('Credit card was charged, listing update fail ' + listing.id);
+                    response.error(error);
+                  }
+                });
+              }else
+              {
+                console.log('Charging with stripe failed. Error: ' + err);
+                response.error(err);
+              }
+            });
+            
+          },
+          error: function(object, error) {
+            console.log('Fail to get listing ' + request.params.listingID);
+            response.error(error);
+          }
+        });      
+      },
+      error: function(object, error) {
+        console.log('Fail to get user ' + request.params.userID);
+        response.error(error);
       }
     });
 
-  // // We start in the context of a promise to keep all the
-  // // asynchronous code consistent. This is not required.
-  // Parse.Promise.as().then(function(order) { 
-  //   // Now we can charge the credit card using Stripe and the credit card token.
-  //   return Stripe.Charges.create({
-  //     amount: 20 * 100, // hardcoded $ 20 
-  //     currency: 'usd',
-  //     card: request.params.cardToken,
-  //     description: "my description",
-  //     metadata: {"some_id": "1232"}
-  //   }).then(null, function(error) {
-  //     console.log('Charging with stripe failed. Error: ' + error);
-  //     return Parse.Promise.error('An error has occurred. Your credit card was not charged.');
-  //   });
-
-  // }).then(function(purchase) {
-  //   response.success('Success');
-  // }).then(function(error) {
-  //   // Any promise that throws an error will propagate to this handler.
-  // // We use it to return the error from our Cloud Function using the 
-  // // message we individually crafted based on the failure above.
-  //   response.error(error);
-
-  // });
 });
-
-/*
- * Setup a charging plan for an user using the Stripe
- * Cloud Module.
- *
- * Expected input (in request.params):
- *   reasonForTheCharge : String, can be "Mug, "Tshirt" or "Hoodie"
- *   cardToken      	: String, the credit card token returned to the client from Stripe
-
- *   chargeAmount		: int, charge amount in $
- *	 repeat				: enum? monthly, yearly.
-
- *   id           	: String, the buyer's id
- *   name           : String, the buyer's name
- *
- * Also, please note that on success, "Success" will be returned. 
- */
-
-// Parse.Cloud.define("createSubscriptionPlan", function(request, response) {
-//   // The Item and Order tables are completely locked down. We 
-//   // ensure only Cloud Code can get access by using the master key.
-//   Parse.Cloud.useMasterKey();
-
-//   // Top level variables used in the promise chain. Unlike callbacks,
-//   // each link in the chain of promise has a separate context.
-//   var item, order;
-
-//   // We start in the context of a promise to keep all the
-//   // asynchronous code consistent. This is not required.
-//   Parse.Promise.as().then(function(order) { 
-
-//   }).then(function(purchase) {
-
-//   }).then(function(order) {
-//     response.success('Success');
-//   }).then(function() {
-//     // And we're done!
-//     response.success('Success');
-
-//   // Any promise that throws an error will propagate to this handler.
-//   // We use it to return the error from our Cloud Function using the 
-//   // message we individually crafted based on the failure above.
-//   }, function(error) {
-//     response.error(error);
-//   });
-// });
-
-// Parse.Cloud.define("shareVivaEmail", function(request, response) {
-  
-//   var fullName = request.params.fullName;
-//   var mailFrom = request.params.from;
-//   var mailTo = request.params.to;
-//   var subject = request.params.subject;
-
-//   var template = fs.readFileSync('cloud/templates/shareJobVivaEmail_html.js','utf8');
-//   var compiled = _.template(template);
-//   var html = compiled(
-//       {
-//          // 'name': fullName
-//       }
-//   );
-
-//   console.log("Read HTML OK OK OK");
-//   // console.log(html);
-
-//   Mailgun.sendEmail({
-//       to: mailTo,
-//       from: mailFrom,
-//       subject: subject,
-//       text: "Your email did not support html...",
-//       html: html
-//   }, {
-//       success: function(httpResponse) {
-//           console.log(httpResponse);
-//           response.success("Email sent!");
-//       },
-//       error: function(httpResponse) {
-//          console.error(httpResponse);
-//          response.error("Uh Oh Something went wrong...");
-//       }
-//   });
-// });
 
 Parse.Cloud.define("resetPassword", function(request, response) {
 
