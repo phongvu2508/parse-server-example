@@ -41,10 +41,12 @@ Parse.Cloud.define("hello", function(request, response) {
 Parse.Cloud.define("chargeListing", function(request, response) {
   // Parse.Cloud.useMasterKey();
 
-  var userQuery = new Parse.Query(Parse.Object.extend("User"));
+  console.log('Start to process charging.');
+
+  var userQuery = new Parse.Query("User");
   userQuery.get(request.params.userID, {
       success: function(user) {
-        var listingQuery = new Parse.Query(Parse.Object.extend("Listing"));
+        var listingQuery = new Parse.Query("Listing");
         listingQuery.include("listingType")
 
         listingQuery.get(request.params.listingID, {
