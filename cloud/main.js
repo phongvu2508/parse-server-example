@@ -48,9 +48,8 @@ Parse.Cloud.define("chargeListing", function(request, response) {
   return stripe.charges.create({
       amount: 20 * 100, // hardcoded $ 20 
       currency: 'usd',
-      card: request.params.cardToken,
-      description: "my description",
-      metadata: {"some_id": "1232"}
+      source: request.params.cardToken,
+      description: "Charge for posting a listing"
     }, function(err, charge) {
       // asynchronously called
       if(charge){
