@@ -61,9 +61,9 @@ Parse.Cloud.define("chargeListing", function(request, response) {
               currency: 'usd',
               source: request.params.cardToken,
               description: description
-              // receipt_email: user.get('email'),
-              // metadata: {FindtouchUserId: request.params.userID,
-              //             FindtouchListingId: request.params.listingID}
+              receipt_email: user.get('email'),
+              metadata: {FindtouchUserId: request.params.userID,
+                          FindtouchListingId: request.params.listingID}
             }, function(err, charge) {
               // asynchronously called
               if(charge){
@@ -71,20 +71,21 @@ Parse.Cloud.define("chargeListing", function(request, response) {
                 listing.set("status", "active");
                 listing.set("paymentStatus", "paid");
 
-                listing.set("expirationDate", moment().add(duration, 'days'));
+                var expirationDate =  moment().add(duration, 'days');
 
-                listing.save(null, {
-                  success: function(listing) {
+                listing.set("expirationDate", expirationDate);
 
-                    console.log('Listing update successfully ' + listing.id);
-                    response.success(charge);
-                  },
-                  error: function(listing, error) {
-                    // worst situation, credit card was charged, but we cannot save the listing update. 
+                console.log('Listing updating to status = active, paymentStatus = paid, expirationDate = ' + expirationDate);
+
+                listing.save().then(function() {
+                  console.log('Listing update successfully ' + listing.id);
+                  response.success(charge);
+                }, function(error) {
+                  // worst situation, credit card was charged, but we cannot save the listing update. 
                     console.log('Credit card was charged, listing update fail ' + listing.id);
                     response.error(error);
-                  }
                 });
+                
               }else
               {
                 console.log('Charging with stripe failed. Error: ' + err);
