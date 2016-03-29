@@ -13,8 +13,10 @@ var stripe = require("stripe")(
 // var _ = require('underscore');
 // var fs = require('fs');
 
-var path = require('path');
-var randomstring = require(path.join(__dirname, 'library/randomString/randomString.js'));
+// var path = require('path');
+// var randomstring = require(path.join(__dirname, 'library/randomString/randomString.js'));
+
+var randomstring = require("randomstring");
 
 
 // Use Parse.Cloud.define to define as many cloud functions as you want.
@@ -60,7 +62,7 @@ Parse.Cloud.define("chargeListing", function(request, response) {
               amount: amountInCent,
               currency: 'usd',
               source: request.params.cardToken,
-              description: description
+              description: description,
               receipt_email: user.get('email'),
               metadata: {FindtouchUserId: request.params.userID,
                           FindtouchListingId: request.params.listingID}
@@ -77,18 +79,17 @@ Parse.Cloud.define("chargeListing", function(request, response) {
 
                 console.log('Listing updating to status = active, paymentStatus = paid, expirationDate = ' + expirationDate);
 
-                listing.save();
-                // .then(function() {
-                //   console.log('Listing update successfully ' + listing.id);
-                //   response.success(charge);
-                // }, function(error) {
-                //   // worst situation, credit card was charged, but we cannot save the listing update. 
-                //     console.log('Credit card was charged, listing update fail ' + listing.id);
-                //     response.error(error);
-                // });
+                listing.save().then(function() {
+                  console.log('Listing update successfully ' + listing.id);
+                  response.success(charge);
+                }, function(error) {
+                  // worst situation, credit card was charged, but we cannot save the listing update. 
+                    console.log('Credit card was charged, listing update fail ' + listing.id);
+                    response.error(error);
+                });
 
-                console.log('Listing update successfully ' + listing.id);
-                response.success(charge);
+                // console.log('Listing update successfully ' + listing.id);
+                // response.success(charge);
 
               }else
               {
