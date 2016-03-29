@@ -58,10 +58,10 @@ Parse.Cloud.define("chargeListing", function(request, response) {
               amount: amountInCent,
               currency: 'usd',
               source: request.params.cardToken,
-              description: description,
-              receipt_email: user.get('email'),
-              metadata: {FindtouchUserId: request.params.userID,
-                          FindtouchListingId: request.params.listingID}
+              description: description
+              // receipt_email: user.get('email'),
+              // metadata: {FindtouchUserId: request.params.userID,
+              //             FindtouchListingId: request.params.listingID}
             }, function(err, charge) {
               // asynchronously called
               if(charge){
