@@ -16,7 +16,7 @@ var stripe = require("stripe")(
 // var path = require('path');
 // var randomstring = require(path.join(__dirname, 'library/randomString/randomString.js'));
 
-var randomstring = require("randomstring");
+var randomstring = require('randomstring');
 
 
 // Use Parse.Cloud.define to define as many cloud functions as you want.
