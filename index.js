@@ -8,7 +8,7 @@ var path = require('path');
 var databaseUri = process.env.DATABASE_URI || process.env.MONGOLAB_URI;
 
 if (!databaseUri) {
-  console.log('DATABASE_URI not specified, falling back to localhost.');
+  console.log('DATABASE_URI not specified, falling back to mongodb://devAdmin:123456@ds064628.mlab.com:64628/findtouchdev.');
 }
 
 var api = new ParseServer({

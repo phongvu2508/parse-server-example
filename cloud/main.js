@@ -7,16 +7,19 @@ var stripe = require("stripe")(
   "sk_test_Os4QKRvjOi2g3tRuyXjBty3y"
 ); // Test key
 
+var mandrill = require('mandrill-api/mandrill');
+var mandrill_client = new mandrill.Mandrill('1wDDvAXrtGo50Kw8Wt1izw');
+
 // var Mailgun = require('mailgun');
 // Mailgun.initialize("sandbox70d17fc2c9044f9992e1c0f7ba66e147.mailgun.org", "key-75b094eb418172847bfd1ae838b2fe74");
 
-// var _ = require('underscore');
-// var fs = require('fs');
+var _ = require('underscore');
+var fs = require('fs');
 
 // var path = require('path');
 // var randomstring = require(path.join(__dirname, 'library/randomString/randomString.js'));
 
-var randomstring = require('randomstring');
+
 
 
 // Use Parse.Cloud.define to define as many cloud functions as you want.
@@ -82,6 +85,9 @@ Parse.Cloud.define("chargeListing", function(request, response) {
 
                 listing.save().then(function() {
                   console.log('Listing update successfully ' + listing.id);
+
+                  // TODO: Notify user here.
+
                   response.success(charge);
                 }, function(error) {
                   // worst situation, credit card was charged, but we cannot save the listing update. 
@@ -111,7 +117,7 @@ Parse.Cloud.define("chargeListing", function(request, response) {
 });
 
 Parse.Cloud.define("resetPassword", function(request, response) {
-
+  var randomstring = require('randomstring');
   var generatedPassword = randomstring.generate(12);
   console.log("Generated Password: " + generatedPassword);
 
@@ -120,21 +126,76 @@ Parse.Cloud.define("resetPassword", function(request, response) {
   query.first({
       success: function(user){
           if (user) {
-              // Parse.Cloud.useMasterKey();
+              Parse.Cloud.useMasterKey();
 
               response.success("We still waiting for email function, therefor password for user "+ user.get('username') +" will not be reset yet.");
 
-              // user.setPassword(generatedPassword);
+              user.setPassword(generatedPassword);
 
-              // user.save(null,{
-              // success: function(user){
-              //     // The user was saved correctly
-              //     response.success(1);
-              // },
-              // error: function(SMLogin, error){
-              //     response.error("There are issue happen while changing your password, please try again later.");
-              // }
-          // });
+              user.save(null,{
+                  success: function(user){
+                      var userFullName = user.get("firstname") + " " + user.get("lastname");
+                      var template_name = "PasswordResetMail";
+                      var template_content = [{
+                              "name": "example name",
+                              "content": "example content"
+                          }];
+
+                      var message = {
+                          "subject": "Your password on Findtouch.com has been reset",
+                          "from_email": "support@findtouch.com",
+                          "from_name": "Example Name",
+                          "to": [{
+                                  "email": request.params.email,
+                                  "name": userFullName,
+                                  "type": "to"
+                              }],
+                          "headers": {
+                              "Reply-To": "support@findtouch.com"
+                          },
+
+                          "merge": true,
+                          "merge_language": "mailchimp",
+                          "global_merge_vars": [{
+                                  "name": "name",
+                                  "content": userFullName
+                                },
+                                {
+                                  "name": "password",
+                                  "content": generatedPassword
+                                }],
+
+                          "tags": [
+                              "password-resets"
+                          ]
+                      };
+
+                      var async = false;
+                      var ip_pool = "Main Pool";
+                      var send_at = "example send_at";
+                      mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message, "async": async, "ip_pool": ip_pool, "send_at": send_at
+                      }, function(result) {
+                          console.log(result);
+                          response.success(result);
+                          /*
+                          [{
+                                  "email": "recipient.email@example.com",
+                                  "status": "sent",
+                                  "reject_reason": "hard-bounce",
+                                  "_id": "abc123abc123abc123abc123abc123"
+                          }]
+                          */
+                      }, function(e) {
+                          // Mandrill returns the error as an object with name and message keys
+                          console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+                          response.error('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+                          // A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+                      });
+                  },
+                  error: function(SMLogin, error){
+                      response.error("There are issue happen while changing your password, please try again later.");
+                  }
+              });
           };
       },
       error: function(){
@@ -233,17 +294,103 @@ Parse.Cloud.define("searchWorker", function(request, response) {
   });
 });
 
+Parse.Cloud.define("searchWorkerWithFilters", function(request, response) {
+  var keywords = request.params.keywords;
+  var city = request.params.city;
+
+  var skills = request.params.skills;
+
+  var nameQuery = new Parse.Query("User");
+  nameQuery.contains("fullName", keywords);
+
+  if(city != ""){
+    nameQuery.contains("city", city);
+  }
+
+  var profileQuery = new Parse.Query("UserProfile");
+  profileQuery.containsAll("skills", skills);
+  profileQuery.matchesQuery("user", nameQuery);
+  profileQuery.include("user");
+
+  profileQuery.find({
+    success: function(results) {
+
+      var workers = [];
+
+      for (var i = 0; i < results.length; ++i) {
+        workers.push(results[i].get("user"));
+      }
+
+      response.success(workers);
+    },
+    error: function() {
+      response.error("listing lookup failed");
+    }
+  });
+});
+
 Parse.Cloud.beforeSave(Parse.User, function(request, response) {
 
-  var firstName = request.object.get("firstName");
-  var lastName = request.object.get("lastName");
+  var firstName = request.object.get("firstName").toLowerCase();
+  var lastName = request.object.get("lastName").toLowerCase();
 
-  request.object.set("firstName", firstName.toLowerCase());
-  request.object.set("lastName", lastName.toLowerCase());
+  request.object.set("firstName", firstName);
+  request.object.set("lastName", lastName);
 
-  request.object.set("fullName", firstName.toLowerCase() + " " + lastName.toLowerCase());
+  request.object.set("fullName", firstName + " " + lastName);
 
-  response.success();
+  if(request.object.get("activated") === false &&
+    request.object.get("admin") === false){
+      var user = request.object;
+      var userFullName = user.get("firstname") + " " + user.get("lastname");
+      var template_name = "UserActivateMail";
+      var template_content = [{
+              "name": "example name",
+              "content": "example content"
+          }];
+
+      var message = {
+          "subject": "Your personal account has been created on Findtouch.com",
+          "from_email": "support@findtouch.com",
+          "from_name": "Example Name",
+          "to": [{
+                  "email": user.get("email"),
+                  "name": userFullName,
+                  "type": "to"
+              }],
+          "headers": {
+              "Reply-To": "support@findtouch.com"
+          },
+
+          "merge": true,
+          "merge_language": "mailchimp",
+          "global_merge_vars": [{
+                  "name": "name",
+                  "content": userFullName
+                },
+                {
+                  "name": "email",
+                  "content": user.get("email")
+                }],
+
+          "tags": [
+              "user-create"
+          ]
+      };
+
+      var async = false;
+      var ip_pool = "Main Pool";
+      var send_at = "example send_at";
+      mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message, "async": async, "ip_pool": ip_pool, "send_at": send_at
+      }, function(result) {
+          console.log(result);
+          request.object.set("activated", true);
+          response.success();
+      }, function(e) {
+          // Mandrill returns the error as an object with name and message keys
+          console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+      });
+  }
 });
 
 Parse.Cloud.beforeSave("Listing", function(request, response) {
@@ -289,6 +436,7 @@ Parse.Cloud.define("listingExpiringCheck", function(request, status) {
   // console.log("dateCheckForExpiringInMilisecond: " + dateCheckForExpiringInMilisecond);
   var query = new Parse.Query("Listing");
   query.contains("status", "active");
+  query.include("User");
 
   query.each(function(listing) {
     var expireDate = listing.get("expirationDate");
@@ -297,6 +445,55 @@ Parse.Cloud.define("listingExpiringCheck", function(request, status) {
       if(expireDate.getTime() < dateCheckForExpiringInMilisecond){
         listing.set("status", "expiring");
         listing.save();
+
+        var listingTitle = listing.get("title");
+        var user = listing.get("user");
+        var userFullName = user.get("firstname") + " " + user.get("lastname");
+        var template_name = "ListingExpiringMail";
+        var template_content = [{
+                "name": "example name",
+                "content": "example content"
+            }];
+
+        var message = {
+            "subject": "Your listing on Findtouch.com is expiring",
+            "from_email": "support@findtouch.com",
+            "from_name": "Example Name",
+            "to": [{
+                    "email": user.get("email"),
+                    "name": userFullName,
+                    "type": "to"
+                }],
+            "headers": {
+                "Reply-To": "support@findtouch.com"
+            },
+
+            "merge": true,
+            "merge_language": "mailchimp",
+            "global_merge_vars": [{
+                    "name": "name",
+                    "content": userFullName
+                  },
+                  {
+                    "name": "listing",
+                    "content": listingTitle
+                  }],
+
+            "tags": [
+                "listing-expiring"
+            ]
+        };
+
+        var async = false;
+        var ip_pool = "Main Pool";
+        var send_at = "example send_at";
+        mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message, "async": async, "ip_pool": ip_pool, "send_at": send_at
+        }, function(result) {
+            console.log(result);
+        }, function(e) {
+            // Mandrill returns the error as an object with name and message keys
+            console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+        });
       }
   }).then(function() {
     // Set the job's success status
@@ -313,12 +510,62 @@ Parse.Cloud.define("listingExpiredCheck", function(request, status) {
   var todayInMiliseconds = today.getTime();
   var query = new Parse.Query("Listing");
   query.containedIn("status", ["expiring", "inactive"]);
+  query.include("User");
 
   query.each(function(listing) {
     var expireDate = listing.get("expirationDate");
       if(expireDate.getTime() < todayInMiliseconds){
         listing.set("status", "expired");
         listing.save();
+
+        var listingTitle = listing.get("title");
+        var user = listing.get("user");
+        var userFullName = user.get("firstname") + " " + user.get("lastname");
+        var template_name = "ListingExpiredMail";
+        var template_content = [{
+                "name": "example name",
+                "content": "example content"
+            }];
+
+        var message = {
+            "subject": "Your listing on Findtouch.com has been expired",
+            "from_email": "support@findtouch.com",
+            "from_name": "Example Name",
+            "to": [{
+                    "email": user.get("email"),
+                    "name": userFullName,
+                    "type": "to"
+                }],
+            "headers": {
+                "Reply-To": "support@findtouch.com"
+            },
+
+            "merge": true,
+            "merge_language": "mailchimp",
+            "global_merge_vars": [{
+                    "name": "name",
+                    "content": userFullName
+                  },
+                  {
+                    "name": "listing",
+                    "content": listingTitle
+                  }],
+
+            "tags": [
+                "listing-expired"
+            ]
+        };
+
+        var async = false;
+        var ip_pool = "Main Pool";
+        var send_at = "example send_at";
+        mandrill_client.messages.sendTemplate({"template_name": template_name, "template_content": template_content, "message": message, "async": async, "ip_pool": ip_pool, "send_at": send_at
+        }, function(result) {
+            console.log(result);
+        }, function(e) {
+            // Mandrill returns the error as an object with name and message keys
+            console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+        });
       }
   }).then(function() {
     // Set the job's success status
