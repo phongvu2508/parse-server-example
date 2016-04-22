@@ -312,7 +312,7 @@ Parse.Cloud.define("searchWorkerWithFilters", function(request, response) {
 
   var profileQuery = new Parse.Query("UserProfile");
   profileQuery.containsAll("skills", skills);
-  // profileQuery.matchesQuery("user", nameQuery);
+  profileQuery.matchesQuery("user", nameQuery);
   profileQuery.include("user");
 
   profileQuery.find({
