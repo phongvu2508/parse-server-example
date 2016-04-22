@@ -297,7 +297,7 @@ Parse.Cloud.define("searchWorker", function(request, response) {
 Parse.Cloud.define("searchWorkerWithFilters", function(request, response) {
   var keywords = request.params.keywords;
   var city = request.params.city;
-  var skills = request.params.skills;
+  var skills = request.params.skillFilter;
 
   console.log("keywords: " + keywords);
   console.log("city: " + city);
