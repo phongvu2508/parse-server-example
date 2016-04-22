@@ -297,8 +297,11 @@ Parse.Cloud.define("searchWorker", function(request, response) {
 Parse.Cloud.define("searchWorkerWithFilters", function(request, response) {
   var keywords = request.params.keywords;
   var city = request.params.city;
-
   var skills = request.params.skills;
+
+  console.log("keywords: " + keywords);
+  console.log("city: " + city);
+  console.log("skills: " + skills);
 
   var nameQuery = new Parse.Query("User");
   nameQuery.contains("fullName", keywords);
@@ -309,11 +312,13 @@ Parse.Cloud.define("searchWorkerWithFilters", function(request, response) {
 
   var profileQuery = new Parse.Query("UserProfile");
   profileQuery.containsAll("skills", skills);
-  profileQuery.matchesQuery("user", nameQuery);
+  // profileQuery.matchesQuery("user", nameQuery);
   profileQuery.include("user");
 
   profileQuery.find({
     success: function(results) {
+
+      console.log("Found " + results.length + " result(s)");
 
       var workers = [];
 
